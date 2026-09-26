@@ -4,6 +4,13 @@ import json
 from datetime import datetime, timezone
 
 
+CLINICAL_FIELDS = {
+    "symptom_reported": {"body_site", "symptom", "summary", "capture_request_id", "evidence_source", "data_origin"},
+    "medication_supply_reported": {"medication_name", "formulation", "strength", "supply_status", "summary", "evidence_source", "data_origin"},
+    "prescription_recorded": {"medication_name", "formulation", "strength", "supply_status", "summary", "evidence_source", "data_origin"},
+}
+
+
 def utc_timestamp(value: str) -> datetime:
     parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
     if parsed.tzinfo is None:
@@ -27,11 +34,19 @@ def normalize(source_id: str, record: dict) -> tuple[str, dict]:
     }
     occurred_at = utc_timestamp(record["occurred_at"])
     if kind == "event":
+        event_type = str(payload["event_type"])
+        data = payload.get("data", {})
+        if event_type in CLINICAL_FIELDS:
+            if not isinstance(data, dict):
+                raise ValueError("clinical event data must be an object")
+            data = {key: value for key, value in data.items() if key in CLINICAL_FIELDS[event_type]}
+            if any(not isinstance(value, str) or len(value) > 500 for value in data.values()):
+                raise ValueError("clinical event fields must be bounded strings")
         return "device_events", {
             **common,
-            "event_type": str(payload["event_type"]),
+            "event_type": event_type,
             "occurred_at": occurred_at,
-            "payload_json": json.dumps(payload.get("data", {}), sort_keys=True, separators=(",", ":")),
+            "payload_json": json.dumps(data, sort_keys=True, separators=(",", ":")),
         }
     if kind == "span":
         return "agent_spans", {
@@ -59,5 +74,6 @@ def normalize(source_id: str, record: dict) -> tuple[str, dict]:
             "byte_count": int(payload["byte_count"]),
             "width_px": int(payload["width_px"]) if payload.get("width_px") is not None else None,
             "height_px": int(payload["height_px"]) if payload.get("height_px") is not None else None,
+            "capture_request_id": str(payload["capture_request_id"]) if payload.get("capture_request_id") else None,
         }
     raise ValueError(f"unknown bronze record kind: {kind}")

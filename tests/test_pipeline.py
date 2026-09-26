@@ -1,4 +1,5 @@
 import json
+import runpy
 import sqlite3
 import subprocess
 import sys
@@ -8,6 +9,7 @@ import pytest
 from botocore.exceptions import ClientError
 
 from azalea_pipeline import bronze, extract, gold
+from azalea_pipeline.transform import normalize
 from azalea_pipeline.storage import get_cursor, read_table
 
 
@@ -109,3 +111,42 @@ def test_invalid_timestamp_does_not_advance_cursor(monkeypatch):
     with pytest.raises(ValueError, match="UTC offset"):
         extract.extract_source(s3, "demo-bucket", source)
     assert get_cursor(s3, "demo-bucket", source.source_id) == 0
+
+
+def test_lakshya_fixture_normalizes_and_links_photo_without_transcript(tmp_path):
+    fixture = runpy.run_path(str(Path(__file__).parents[1] / "scripts/seed_synthetic.py"))
+    db_path = tmp_path / "bronze.sqlite3"
+    fixture["make_fixture"](db_path)
+    with sqlite3.connect(db_path) as db:
+        db.row_factory = sqlite3.Row
+        records = [dict(row) for row in db.execute("SELECT * FROM bronze_records ORDER BY seq")]
+    silver = {"device_events": [], "agent_spans": [], "media_assets": []}
+    for record in records:
+        table, row = normalize("demo-lakshya-01", record)
+        silver[table].append(row)
+    assert {name: len(rows) for name, rows in silver.items()} == {
+        "device_events": 4, "agent_spans": 1, "media_assets": 1,
+    }
+    assert {row["patient_id"] for rows in silver.values() for row in rows} == {"demo-lakshya-001"}
+    assert all("transcript" not in row["payload_json"] for row in silver["device_events"])
+    spoken = next(record for record in records if record["record_id"] == "lakshya-skin-current-001")
+    spoken_payload = json.loads(spoken["payload_json"])
+    spoken_payload["data"]["raw_transcript"] = "sensitive spoken content"
+    _, cleaned = normalize("demo-lakshya-01", {**spoken, "payload_json": json.dumps(spoken_payload)})
+    assert "raw_transcript" not in cleaned["payload_json"]
+    tables = gold.build_gold(*silver.values())
+    medical = tables["medical_events_gold"]
+    prescription = tables["prescription_events_gold"]
+    assert len(medical) == len(prescription) == 2
+    assert medical[-1]["photo_record_id"] == "lakshya-media-current-001"
+    assert medical[-1]["photo_garage_key"] == "demo/lakshya-placeholder.jpg"
+    assert medical[0]["photo_record_id"] is None
+    assert prescription[-1]["event_type"] == "medication_supply_reported"
+    assert prescription[-1]["supply_status"] == "out"
+    assert prescription[0]["event_type"] == "prescription_recorded"
+    assert all(row["data_origin"] == "synthetic_demo" for row in medical + prescription)
+
+    # Matching request IDs are never enough to cross patient boundaries.
+    other_patient_photo = {**silver["media_assets"][0], "patient_id": "someone-else"}
+    without_photo = gold.build_gold(silver["device_events"], [], [other_patient_photo])
+    assert without_photo["medical_events_gold"][-1]["photo_record_id"] is None
