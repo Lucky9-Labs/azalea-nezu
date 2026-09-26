@@ -2,6 +2,7 @@
 *.tfstate*
 *.tfplan
 *.tfvars
+*.tfvars.json
 !.terraform.lock.hcl
 .venv/
 __pycache__/
@@ -10,6 +11,10 @@ __pycache__/
 *.db
 *.sqlite3
 .env
+.env.*
+!.env.example
+!**/.env.example
+config/sources.json
 vps/secrets/
 vps/data/
 vps/bronze/
