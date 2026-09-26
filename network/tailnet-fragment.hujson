@@ -1,0 +1,16 @@
+// Add these entries to an existing policy. On a fresh tailnet, replace the
+// default allow-all grant; leaving it in place defeats these network limits.
+{
+  "tagOwners": {
+    "tag:azalea-notebook": ["autogroup:admin"],
+    "tag:azalea-edge": ["autogroup:admin"],
+    "tag:azalea-vps": ["autogroup:admin"]
+  },
+  "grants": [
+    {"src": ["tag:azalea-notebook"], "dst": ["tag:azalea-edge", "tag:azalea-vps"], "ip": ["tcp:22"]},
+    {"src": ["tag:azalea-edge"], "dst": ["tag:azalea-vps"], "ip": ["tcp:3900"]}
+  ],
+  "ssh": [
+    {"action": "accept", "src": ["tag:azalea-notebook"], "dst": ["tag:azalea-edge", "tag:azalea-vps"], "users": ["azalea-read"]}
+  ]
+}

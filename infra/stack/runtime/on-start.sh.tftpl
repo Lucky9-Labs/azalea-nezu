@@ -1,0 +1,4 @@
+#!/bin/bash
+set -euo pipefail
+aws s3 cp 's3://${artifacts_bucket}/runtime/install.sh' /tmp/azalea-nezu-install.sh --region us-west-2 --no-progress
+bash /tmp/azalea-nezu-install.sh '${artifacts_bucket}' '${secret_name}'

@@ -1,0 +1,26 @@
+#!/bin/sh
+set -eu
+
+# Git runs post-checkout for a newly added worktree. Keep local configuration
+# sourced from the primary checkout; never place credentials in Git.
+[ "${3:-}" = 1 ] || exit 0
+
+worktree_root=$(git rev-parse --show-toplevel)
+common_dir=$(git rev-parse --path-format=absolute --git-common-dir)
+primary_root=$(dirname "$common_dir")
+[ "$worktree_root" != "$primary_root" ] || exit 0
+
+for relative_path in .env config/sources.json vps/.env; do
+  source_path="$primary_root/$relative_path"
+  target_path="$worktree_root/$relative_path"
+  [ -f "$source_path" ] || continue
+  [ ! -L "$source_path" ] || {
+    printf 'Azalea: skipping symlinked source %s\n' "$relative_path" >&2
+    continue
+  }
+  [ ! -e "$target_path" ] && [ ! -L "$target_path" ] || continue
+
+  mkdir -p "$(dirname "$target_path")"
+  install -m 600 "$source_path" "$target_path"
+  printf 'Azalea: copied private %s into new worktree\n' "$relative_path" >&2
+done

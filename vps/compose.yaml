@@ -1,0 +1,22 @@
+services:
+  bronze-init:
+    image: python:3.12-alpine
+    command: ["python", "/opt/init-bronze.py"]
+    restart: "no"
+    env_file: .env
+    volumes:
+      - ./bronze:/var/lib/azalea
+      - ../schemas/pi_bronze.sql:/opt/pi_bronze.sql:ro
+      - ./init-bronze.py:/opt/init-bronze.py:ro
+  garage:
+    image: dxflrs/garage:v2.3.0
+    command: ["/garage", "server", "--single-node", "--default-bucket"]
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "${TAILSCALE_IPV4}:3900:3900"
+    volumes:
+      - ./garage.toml:/etc/garage.toml:ro
+      - ./secrets/rpc_secret:/run/secrets/rpc_secret:ro
+      - ./data/meta:/var/lib/garage/meta
+      - ./data/data:/var/lib/garage/data

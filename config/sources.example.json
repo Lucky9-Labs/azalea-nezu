@@ -1,0 +1,16 @@
+{
+  "sources": [
+    {
+      "source_id": "demo-pi-01",
+      "host": "azalea-pi-01.example-tailnet.ts.net",
+      "ssh_user": "azalea-read",
+      "db_path": "/var/lib/azalea/bronze.sqlite3"
+    },
+    {
+      "source_id": "demo-vps-01",
+      "host": "azalea-vps-01.example-tailnet.ts.net",
+      "ssh_user": "azalea-read",
+      "db_path": "/var/lib/azalea/bronze.sqlite3"
+    }
+  ]
+}

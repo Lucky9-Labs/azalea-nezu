@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "tables": {
+    "silver": {
+      "device_events": [
+        {"name": "source_id", "type": "string"}, {"name": "bronze_seq", "type": "bigint"},
+        {"name": "record_id", "type": "string"}, {"name": "patient_id", "type": "string"},
+        {"name": "device_id", "type": "string"}, {"name": "event_type", "type": "string"},
+        {"name": "occurred_at", "type": "timestamp"}, {"name": "payload_json", "type": "string"}
+      ],
+      "agent_spans": [
+        {"name": "source_id", "type": "string"}, {"name": "bronze_seq", "type": "bigint"},
+        {"name": "record_id", "type": "string"}, {"name": "patient_id", "type": "string"},
+        {"name": "device_id", "type": "string"}, {"name": "trace_id", "type": "string"},
+        {"name": "span_id", "type": "string"}, {"name": "parent_span_id", "type": "string"},
+        {"name": "agent_name", "type": "string"}, {"name": "operation", "type": "string"},
+        {"name": "started_at", "type": "timestamp"}, {"name": "ended_at", "type": "timestamp"},
+        {"name": "status", "type": "string"}, {"name": "attributes_json", "type": "string"}
+      ],
+      "media_assets": [
+        {"name": "source_id", "type": "string"}, {"name": "bronze_seq", "type": "bigint"},
+        {"name": "record_id", "type": "string"}, {"name": "patient_id", "type": "string"},
+        {"name": "device_id", "type": "string"}, {"name": "captured_at", "type": "timestamp"},
+        {"name": "garage_bucket", "type": "string"}, {"name": "garage_key", "type": "string"},
+        {"name": "sha256", "type": "string"}, {"name": "mime_type", "type": "string"},
+        {"name": "byte_count", "type": "bigint"}, {"name": "width_px", "type": "int"},
+        {"name": "height_px", "type": "int"}
+      ]
+    },
+    "gold": {
+      "patient_timeline": [
+        {"name": "patient_id", "type": "string"}, {"name": "occurred_at", "type": "timestamp"},
+        {"name": "kind", "type": "string"}, {"name": "summary", "type": "string"},
+        {"name": "source_id", "type": "string"}, {"name": "record_id", "type": "string"},
+        {"name": "garage_bucket", "type": "string"}, {"name": "garage_key", "type": "string"}
+      ],
+      "patient_overview": [
+        {"name": "patient_id", "type": "string"}, {"name": "latest_activity_at", "type": "timestamp"},
+        {"name": "event_count", "type": "bigint"}, {"name": "span_count", "type": "bigint"},
+        {"name": "media_count", "type": "bigint"}, {"name": "error_span_count", "type": "bigint"}
+      ],
+      "trace_summaries": [
+        {"name": "patient_id", "type": "string"}, {"name": "trace_id", "type": "string"},
+        {"name": "first_started_at", "type": "timestamp"}, {"name": "last_ended_at", "type": "timestamp"},
+        {"name": "span_count", "type": "bigint"}, {"name": "error_span_count", "type": "bigint"}
+      ]
+    }
+  }
+}
