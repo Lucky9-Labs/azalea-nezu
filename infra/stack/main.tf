@@ -50,6 +50,6 @@ locals {
 
 variable "enable_notebook" {
   type        = bool
-  description = "Enable only after the bootstrap Tailscale secret has a value."
-  default     = false
+  description = "Keep the private notebook enabled after the bootstrap Tailscale secret has a value. Set false only for a catalog-only deployment."
+  default     = true
 }

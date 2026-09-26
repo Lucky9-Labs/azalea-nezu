@@ -84,6 +84,11 @@ resource "aws_iam_role_policy" "deployer" {
         Resource = "*", Condition = { StringEquals = { "aws:RequestedRegion" = "us-west-2" } }
       },
       {
+        Sid      = "NotebookNetworkInterfaces", Effect = "Allow",
+        Action   = ["ec2:CreateNetworkInterface", "ec2:DeleteNetworkInterface"],
+        Resource = "*", Condition = { StringEquals = { "aws:RequestedRegion" = "us-west-2" } }
+      },
+      {
         Sid      = "AzaleaIamRoles", Effect = "Allow",
         Action   = ["iam:CreateRole", "iam:DeleteRole", "iam:GetRole", "iam:TagRole", "iam:UntagRole", "iam:ListRoleTags", "iam:ListRolePolicies", "iam:ListAttachedRolePolicies", "iam:GetRolePolicy", "iam:PutRolePolicy", "iam:DeleteRolePolicy", "iam:PassRole", "iam:UpdateAssumeRolePolicy"],
         Resource = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/azalea-nezu-*"
@@ -93,7 +98,7 @@ resource "aws_iam_role_policy" "deployer" {
         Condition = { StringEquals = { "aws:RequestedRegion" = "us-west-2" } }
       },
       {
-        Sid      = "AzaleaKmsManage", Effect = "Allow", Action = ["kms:DescribeKey", "kms:GetKeyPolicy", "kms:PutKeyPolicy", "kms:GetKeyRotationStatus", "kms:EnableKeyRotation", "kms:DisableKeyRotation", "kms:ScheduleKeyDeletion", "kms:CancelKeyDeletion", "kms:CreateAlias", "kms:DeleteAlias", "kms:UpdateAlias", "kms:ListResourceTags", "kms:TagResource", "kms:UntagResource", "kms:Encrypt", "kms:Decrypt", "kms:GenerateDataKey"],
+        Sid      = "AzaleaKmsManage", Effect = "Allow", Action = ["kms:DescribeKey", "kms:GetKeyPolicy", "kms:PutKeyPolicy", "kms:GetKeyRotationStatus", "kms:EnableKeyRotation", "kms:DisableKeyRotation", "kms:ScheduleKeyDeletion", "kms:CancelKeyDeletion", "kms:CreateAlias", "kms:DeleteAlias", "kms:UpdateAlias", "kms:ListResourceTags", "kms:TagResource", "kms:UntagResource", "kms:Encrypt", "kms:Decrypt", "kms:GenerateDataKey", "kms:CreateGrant"],
         Resource = ["arn:aws:kms:us-west-2:${data.aws_caller_identity.current.account_id}:key/*", "arn:aws:kms:us-west-2:${data.aws_caller_identity.current.account_id}:alias/azalea-nezu-*"]
       },
       {
