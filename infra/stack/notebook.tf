@@ -57,8 +57,7 @@ resource "aws_s3_object" "deployment_config" {
 }
 
 resource "aws_sagemaker_notebook_instance_lifecycle_configuration" "bootstrap" {
-  count = var.enable_notebook ? 1 : 0
-  name  = "azalea-nezu-bootstrap"
+  name = "azalea-nezu-bootstrap"
   on_start = base64encode(templatefile("${path.module}/runtime/on-start.sh.tftpl", {
     artifacts_bucket = aws_s3_bucket.artifacts.id
     secret_name      = "azalea-nezu/tailscale/notebook-auth-key"
@@ -76,6 +75,6 @@ resource "aws_sagemaker_notebook_instance" "medallion" {
   root_access            = "Disabled"
   volume_size            = 10
   kms_key_id             = aws_kms_key.data.arn
-  lifecycle_config_name  = aws_sagemaker_notebook_instance_lifecycle_configuration.bootstrap[0].name
+  lifecycle_config_name  = aws_sagemaker_notebook_instance_lifecycle_configuration.bootstrap.name
   depends_on             = [aws_s3_object.install, aws_s3_object.repo, aws_s3_object.deployment_config, aws_iam_role_policy.notebook]
 }
