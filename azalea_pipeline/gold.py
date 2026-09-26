@@ -1,5 +1,6 @@
 """Rebuild small synthetic gold snapshots from durable silver Parquet."""
 
+import json
 from collections import defaultdict
 
 import boto3
@@ -9,6 +10,8 @@ from .storage import read_table, write_gold_table
 
 def build_gold(events: list[dict], spans: list[dict], media: list[dict]) -> dict[str, list[dict]]:
     timeline = []
+    medical_events = []
+    prescription_events = []
     overview = defaultdict(lambda: {
         "latest_activity_at": None,
         "event_count": 0,
@@ -17,6 +20,14 @@ def build_gold(events: list[dict], spans: list[dict], media: list[dict]) -> dict
         "error_span_count": 0,
     })
     traces = {}
+    photos_by_request = {}
+    for asset in media:
+        request_id = asset.get("capture_request_id")
+        if request_id:
+            key = (asset["patient_id"], request_id)
+            if key in photos_by_request:
+                raise ValueError("multiple photos for one patient capture request")
+            photos_by_request[key] = asset
 
     def activity(patient_id, when):
         current = overview[patient_id]["latest_activity_at"]
@@ -26,6 +37,35 @@ def build_gold(events: list[dict], spans: list[dict], media: list[dict]) -> dict
     for event in events:
         patient_id = event["patient_id"]
         when = event["occurred_at"]
+        event_type = event["event_type"]
+        if event_type in {"symptom_reported", "medication_supply_reported", "prescription_recorded"}:
+            data = json.loads(event["payload_json"])
+            if not isinstance(data, dict):
+                raise ValueError("clinical silver payload must be an object")
+            common = {
+                "patient_id": patient_id, "event_id": event["record_id"],
+                "occurred_at": when, "event_type": event_type,
+                "summary": data.get("summary"), "source_id": event["source_id"],
+                "device_id": event["device_id"], "evidence_source": data.get("evidence_source"),
+                "data_origin": data.get("data_origin"),
+            }
+            if event_type == "symptom_reported":
+                request_id = data.get("capture_request_id")
+                photo = photos_by_request.get((patient_id, request_id)) if request_id else None
+                medical_events.append({
+                    **common, "body_site": data.get("body_site"), "symptom": data.get("symptom"),
+                    "photo_record_id": photo["record_id"] if photo else None,
+                    "photo_captured_at": photo["captured_at"] if photo else None,
+                    "photo_garage_bucket": photo["garage_bucket"] if photo else None,
+                    "photo_garage_key": photo["garage_key"] if photo else None,
+                    "photo_sha256": photo["sha256"] if photo else None,
+                })
+            else:
+                prescription_events.append({
+                    **common, "medication_name": data.get("medication_name"),
+                    "formulation": data.get("formulation"), "strength": data.get("strength"),
+                    "supply_status": data.get("supply_status"),
+                })
         activity(patient_id, when)
         overview[patient_id]["event_count"] += 1
         timeline.append({
@@ -69,6 +109,8 @@ def build_gold(events: list[dict], spans: list[dict], media: list[dict]) -> dict
         })
 
     return {
+        "medical_events_gold": sorted(medical_events, key=lambda row: (row["patient_id"], row["occurred_at"], row["event_id"])),
+        "prescription_events_gold": sorted(prescription_events, key=lambda row: (row["patient_id"], row["occurred_at"], row["event_id"])),
         "patient_timeline": sorted(timeline, key=lambda row: (row["patient_id"], row["occurred_at"], row["record_id"])),
         "patient_overview": [
             {"patient_id": patient_id, **row} for patient_id, row in sorted(overview.items())

@@ -24,10 +24,30 @@
         {"name": "garage_bucket", "type": "string"}, {"name": "garage_key", "type": "string"},
         {"name": "sha256", "type": "string"}, {"name": "mime_type", "type": "string"},
         {"name": "byte_count", "type": "bigint"}, {"name": "width_px", "type": "int"},
-        {"name": "height_px", "type": "int"}
+        {"name": "height_px", "type": "int"},
+        {"name": "capture_request_id", "type": "string"}
       ]
     },
     "gold": {
+      "medical_events_gold": [
+        {"name": "patient_id", "type": "string"}, {"name": "event_id", "type": "string"},
+        {"name": "occurred_at", "type": "timestamp"}, {"name": "event_type", "type": "string"},
+        {"name": "body_site", "type": "string"}, {"name": "symptom", "type": "string"},
+        {"name": "summary", "type": "string"}, {"name": "photo_record_id", "type": "string"},
+        {"name": "photo_captured_at", "type": "timestamp"}, {"name": "photo_garage_bucket", "type": "string"},
+        {"name": "photo_garage_key", "type": "string"}, {"name": "photo_sha256", "type": "string"},
+        {"name": "source_id", "type": "string"}, {"name": "device_id", "type": "string"},
+        {"name": "evidence_source", "type": "string"}, {"name": "data_origin", "type": "string"}
+      ],
+      "prescription_events_gold": [
+        {"name": "patient_id", "type": "string"}, {"name": "event_id", "type": "string"},
+        {"name": "occurred_at", "type": "timestamp"}, {"name": "event_type", "type": "string"},
+        {"name": "medication_name", "type": "string"}, {"name": "formulation", "type": "string"},
+        {"name": "strength", "type": "string"}, {"name": "supply_status", "type": "string"},
+        {"name": "summary", "type": "string"}, {"name": "source_id", "type": "string"},
+        {"name": "device_id", "type": "string"}, {"name": "evidence_source", "type": "string"},
+        {"name": "data_origin", "type": "string"}
+      ],
       "patient_timeline": [
         {"name": "patient_id", "type": "string"}, {"name": "occurred_at", "type": "timestamp"},
         {"name": "kind", "type": "string"}, {"name": "summary", "type": "string"},

@@ -18,7 +18,8 @@ from azalea_pipeline.gold import publish_gold  # noqa: E402
 from azalea_pipeline.storage import read_table  # noqa: E402
 
 BUCKET = "azalea-nezu-medallion-964028866059-us-west-2"
-SOURCE = Source("demo-local-01", "local-fixture")
+SOURCE = Source("demo-lakshya-01", "local-fixture")
+PATIENT_ID = "demo-lakshya-001"
 
 
 def make_fixture(path: Path) -> None:
@@ -26,24 +27,54 @@ def make_fixture(path: Path) -> None:
         db.executescript((ROOT / "schemas/pi_bronze.sql").read_text())
         rows = [
             (
-                "demo-event-001", "tin_device_events", "raw-event-001", "event",
-                "2026-09-26T19:00:00Z", {"event_type": "pulse", "data": {"bpm": 72}}, None, None,
+                "lakshya-rx-history-001", "tin_device_events", "raw-rx-history-001", "event",
+                "2026-07-15T17:00:00Z", {"event_type": "prescription_recorded", "data": {
+                    "medication_name": "ketoconazole", "formulation": "shampoo", "strength": "2%",
+                    "supply_status": "prescribed", "summary": "Synthetic historical prescription record",
+                    "evidence_source": "synthetic_chart", "data_origin": "synthetic_demo",
+                }}, None, None,
             ),
             (
-                "demo-span-001", "tin_agent_spans", "raw-span-001", "span",
-                "2026-09-26T19:01:00Z", {
-                    "trace_id": "demo-trace-001", "span_id": "demo-span-001",
-                    "agent_name": "demo-agent", "operation": "summarize",
-                    "started_at": "2026-09-26T19:01:00Z", "ended_at": "2026-09-26T19:01:02Z",
+                "lakshya-skin-history-001", "tin_device_events", "raw-skin-history-001", "event",
+                "2026-08-20T18:00:00Z", {"event_type": "symptom_reported", "data": {
+                    "body_site": "scalp", "symptom": "flaking",
+                    "summary": "Patient reported intermittent scalp flaking",
+                    "evidence_source": "patient_report", "data_origin": "synthetic_demo",
+                }}, None, None,
+            ),
+            (
+                "lakshya-skin-current-001", "tin_device_events", "raw-skin-current-001", "event",
+                "2026-09-26T19:00:00Z", {"event_type": "symptom_reported", "data": {
+                    "body_site": "scalp", "symptom": "flaking",
+                    "summary": "Patient is worried about flaky skin on the scalp",
+                    "capture_request_id": "lakshya-capture-001",
+                    "evidence_source": "patient_report", "data_origin": "synthetic_demo",
+                }}, None, None,
+            ),
+            (
+                "lakshya-supply-current-001", "tin_device_events", "raw-supply-current-001", "event",
+                "2026-09-26T19:00:10Z", {"event_type": "medication_supply_reported", "data": {
+                    "medication_name": "ketoconazole", "formulation": "shampoo", "strength": "2%",
+                    "supply_status": "out", "summary": "Patient reports being out of ketoconazole shampoo",
+                    "evidence_source": "patient_report", "data_origin": "synthetic_demo",
+                }}, None, None,
+            ),
+            (
+                "lakshya-media-current-001", "tin_image_refs", "raw-media-current-001", "media",
+                "2026-09-26T19:00:30Z", {
+                    "sha256": "0" * 64, "mime_type": "image/jpeg",
+                    "byte_count": 123, "width_px": 640, "height_px": 480,
+                    "capture_request_id": "lakshya-capture-001",
+                }, "azalea-images", "demo/lakshya-placeholder.jpg",
+            ),
+            (
+                "lakshya-span-current-001", "tin_agent_spans", "raw-span-current-001", "span",
+                "2026-09-26T19:00:40Z", {
+                    "trace_id": "lakshya-trace-001", "span_id": "lakshya-span-001",
+                    "agent_name": "edge-assistant", "operation": "summarize",
+                    "started_at": "2026-09-26T19:00:40Z", "ended_at": "2026-09-26T19:00:42Z",
                     "status": "ok", "attributes": {"synthetic": True},
                 }, None, None,
-            ),
-            (
-                "demo-media-001", "tin_image_refs", "raw-media-001", "media",
-                "2026-09-26T19:02:00Z", {
-                    "sha256": "0" * 64, "mime_type": "image/jpeg",
-                    "byte_count": 123, "width_px": 16, "height_px": 16,
-                }, "azalea-images", "demo/placeholder.jpg",
             ),
         ]
         for record_id, raw_table, raw_id, kind, occurred_at, payload, garage_bucket, garage_key in rows:
@@ -51,9 +82,9 @@ def make_fixture(path: Path) -> None:
                 """INSERT INTO bronze_records
                    (record_id, raw_table, raw_id, record_kind, patient_id, device_id,
                     occurred_at, payload_json, garage_bucket, garage_key)
-                   VALUES (?, ?, ?, ?, 'demo-patient-001', 'demo-device-001', ?, ?, ?, ?)""",
-                (record_id, raw_table, raw_id, kind, occurred_at,
-                 json.dumps(payload), garage_bucket, garage_key),
+                   VALUES (?, ?, ?, ?, ?, 'demo-speaker-001', ?, ?, ?, ?)""",
+                (record_id, raw_table, raw_id, kind, PATIENT_ID,
+                 occurred_at, json.dumps(payload), garage_bucket, garage_key),
             )
 
 
@@ -88,11 +119,17 @@ if __name__ == "__main__":
         first = extract_source(s3, BUCKET, SOURCE, page_size=2, reader=local_reader)
         second = extract_source(s3, BUCKET, SOURCE, page_size=2, reader=local_reader)
         silver = {
-            table: len(read_table(s3, BUCKET, "silver", table))
+            table: sum(row["patient_id"] == PATIENT_ID for row in read_table(s3, BUCKET, "silver", table))
             for table in ("device_events", "agent_spans", "media_assets")
         }
-        gold = publish_gold(BUCKET, s3=s3)
-    assert first == second == 3
-    assert silver == {"device_events": 1, "agent_spans": 1, "media_assets": 1}
-    assert gold == {"patient_timeline": 3, "patient_overview": 1, "trace_summaries": 1}
+        publish_gold(BUCKET, s3=s3)
+        gold = {
+            table: sum(row["patient_id"] == PATIENT_ID for row in read_table(s3, BUCKET, "gold", table))
+            for table in ("medical_events_gold", "prescription_events_gold", "patient_timeline",
+                          "patient_overview", "trace_summaries")
+        }
+    assert first == second == 6
+    assert silver == {"device_events": 4, "agent_spans": 1, "media_assets": 1}
+    assert gold == {"medical_events_gold": 2, "prescription_events_gold": 2,
+                    "patient_timeline": 6, "patient_overview": 1, "trace_summaries": 1}
     print(json.dumps({"cursor_first": first, "cursor_rerun": second, "silver": silver, "gold": gold}))
