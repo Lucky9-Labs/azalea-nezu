@@ -47,6 +47,10 @@ Use Terraform **1.10+** and AWS profile `Lucky9 Root` for bootstrap. The existin
 
 The notebook has no public inbound security group rule and no SageMaker direct internet interface. Its private subnet has NAT for outbound HTTPS; Tailscale uses userspace networking and SSH. Only the `azalea-nezu-gold-reader` role is intended for an agent backend. For the synthetic demo it trusts the notebook role; change the trust principal when an agent backend exists. It can query the gold workgroup and read gold/result S3 prefixes, but has no silver object or catalog permission. Example SQL is in `schemas/agent_queries.sql`. Patient filters in these examples are **not** authorization controls.
 
+## Local worktrees
+
+Keep the private root `.env` in the primary checkout and run `scripts/install-git-hooks.sh` once there. Git's shared hook configuration then runs `.githooks/post-checkout` when a new worktree is created from the updated `main` branch. The hook copies only missing `.env`, `config/sources.json`, and `vps/.env` files from the primary checkout, sets each copy to mode 0600, and never overwrites a worktree's existing local configuration. These files remain Git ignored. AWS credentials stay in the separate shared credentials file described above; the hook does not copy them.
+
 ## Durability and verification
 
 Silver uses one deterministic Parquet object per bronze record (`source_id` and sequence in the key). This intentionally favors simple idempotence over large-file efficiency for the hackathon. The cursor in `control/cursors/<source_id>.json` advances only after a page's objects are durable. A retry skips existing keys. Gold rebuilds from silver and replaces three `current.parquet` snapshots; S3 versioning retains previous versions.
