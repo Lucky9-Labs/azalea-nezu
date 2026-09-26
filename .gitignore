@@ -1,0 +1,16 @@
+.terraform/
+*.tfstate*
+*.tfplan
+*.tfvars
+!.terraform.lock.hcl
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.db
+*.sqlite3
+.env
+vps/secrets/
+vps/data/
+vps/bronze/
+notebooks/.ipynb_checkpoints/

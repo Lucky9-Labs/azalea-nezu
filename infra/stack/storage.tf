@@ -1,0 +1,81 @@
+resource "aws_kms_key" "data" {
+  description             = "Azalea synthetic medallion and Athena objects"
+  enable_key_rotation     = true
+  deletion_window_in_days = 30
+}
+
+resource "aws_kms_alias" "data" {
+  name          = "alias/azalea-nezu-data"
+  target_key_id = aws_kms_key.data.key_id
+}
+
+resource "aws_s3_bucket" "medallion" {
+  bucket = "${local.prefix}-medallion-${local.bucket_suffix}"
+}
+
+resource "aws_s3_bucket" "artifacts" {
+  bucket = "${local.prefix}-artifacts-${local.bucket_suffix}"
+}
+
+resource "aws_s3_bucket" "results" {
+  bucket = "${local.prefix}-athena-results-${local.bucket_suffix}"
+}
+
+locals {
+  buckets = {
+    medallion = aws_s3_bucket.medallion.id
+    artifacts = aws_s3_bucket.artifacts.id
+    results   = aws_s3_bucket.results.id
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "private" {
+  for_each                = local.buckets
+  bucket                  = each.value
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_versioning" "enabled" {
+  for_each = { medallion = aws_s3_bucket.medallion.id, artifacts = aws_s3_bucket.artifacts.id }
+  bucket   = each.value
+  versioning_configuration { status = "Enabled" }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "kms" {
+  for_each = local.buckets
+  bucket   = each.value
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm     = "aws:kms"
+      kms_master_key_id = aws_kms_key.data.arn
+    }
+    bucket_key_enabled = true
+  }
+}
+
+resource "aws_s3_bucket_policy" "https_only" {
+  for_each = local.buckets
+  bucket   = each.value
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid       = "DenyInsecureTransport", Effect = "Deny", Principal = "*", Action = "s3:*",
+      Resource  = ["arn:aws:s3:::${each.value}", "arn:aws:s3:::${each.value}/*"],
+      Condition = { Bool = { "aws:SecureTransport" = "false" } }
+    }]
+  })
+  depends_on = [aws_s3_bucket_public_access_block.private]
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "results" {
+  bucket = aws_s3_bucket.results.id
+  rule {
+    id     = "expire-query-results"
+    status = "Enabled"
+    filter { prefix = "" }
+    expiration { days = 14 }
+  }
+}
