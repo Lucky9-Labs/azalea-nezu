@@ -22,7 +22,7 @@ def main() -> None:
         SecretId=SECRET_NAME,
         SecretString=key,
     )
-    print(f"Stored the Tailscale auth key in Secrets Manager: {SECRET_NAME}")
+    print("Tailscale auth key stored in Secrets Manager.")
 
 
 if __name__ == "__main__":
