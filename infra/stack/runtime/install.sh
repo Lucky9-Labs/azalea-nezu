@@ -37,4 +37,36 @@ tailscale --socket="$socket" up --auth-key="$auth_key" \
   --hostname=azalea-sagemaker --accept-dns=false
 unset auth_key
 
-echo 'Azalea notebooks and Tailscale are ready.'
+# Keep Silver current only when at least one read-only Bronze source is
+# configured. The durable cursor remains in S3.
+sudo -u ec2-user python3 -m pip install --user -r "$destination/requirements.txt"
+sources_file="$destination/config/sources.json"
+if sudo -u ec2-user env PYTHONPATH="$destination" python3 -c \
+  'import sys; from azalea_pipeline.bronze import load_sources; raise SystemExit(0 if load_sources(sys.argv[1]) else 1)' \
+  "$sources_file" >/dev/null 2>&1; then
+  cat >/etc/systemd/system/azalea-silver-poll.service <<EOF
+[Unit]
+Description=Continuously pull Pi/VPS Bronze into Azalea Silver
+After=network-online.target
+ConditionPathExists=$sources_file
+
+[Service]
+Type=simple
+User=ec2-user
+WorkingDirectory=$destination
+ExecStart=/usr/bin/python3 -u $destination/scripts/poll_silver.py --repo $destination --interval-seconds 30
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+EOF
+systemctl daemon-reload
+systemctl enable --now azalea-silver-poll.service
+echo 'Azalea notebooks, Tailscale, and Silver poller are ready.'
+else
+  systemctl disable --now azalea-silver-poll.service || true
+  rm -f /etc/systemd/system/azalea-silver-poll.service
+  systemctl daemon-reload
+  echo 'No Bronze sources configured; Silver poller remains stopped.'
+fi

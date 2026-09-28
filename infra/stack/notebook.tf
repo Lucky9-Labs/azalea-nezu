@@ -25,6 +25,7 @@ locals {
     "azalea_pipeline/storage.py"          = "../../azalea_pipeline/storage.py"
     "azalea_pipeline/extract.py"          = "../../azalea_pipeline/extract.py"
     "azalea_pipeline/gold.py"             = "../../azalea_pipeline/gold.py"
+    "scripts/poll_silver.py"              = "../../scripts/poll_silver.py"
   }
 }
 

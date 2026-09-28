@@ -8,6 +8,9 @@ version = "0.1.0"
 requires-python = ">=3.10"
 dependencies = ["boto3>=1.35,<2", "pyarrow>=17,<25"]
 
+[tool.setuptools.packages.find]
+include = ["azalea_pipeline*"]
+
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]

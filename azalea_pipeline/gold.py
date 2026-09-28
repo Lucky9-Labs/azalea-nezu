@@ -54,6 +54,8 @@ def build_gold(events: list[dict], spans: list[dict], media: list[dict]) -> dict
                 photo = photos_by_request.get((patient_id, request_id)) if request_id else None
                 medical_events.append({
                     **common, "body_site": data.get("body_site"), "symptom": data.get("symptom"),
+                    "capture_request_id": request_id,
+                    "trace_id": request_id,
                     "photo_record_id": photo["record_id"] if photo else None,
                     "photo_captured_at": photo["captured_at"] if photo else None,
                     "photo_garage_bucket": photo["garage_bucket"] if photo else None,
@@ -65,6 +67,8 @@ def build_gold(events: list[dict], spans: list[dict], media: list[dict]) -> dict
                     **common, "medication_name": data.get("medication_name"),
                     "formulation": data.get("formulation"), "strength": data.get("strength"),
                     "supply_status": data.get("supply_status"),
+                    "capture_request_id": data.get("capture_request_id"),
+                    "trace_id": data.get("capture_request_id"),
                 })
         activity(patient_id, when)
         overview[patient_id]["event_count"] += 1
