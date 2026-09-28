@@ -1,7 +1,7 @@
 resource "aws_kms_key" "data" {
   description             = "Azalea synthetic medallion and Athena objects"
   enable_key_rotation     = true
-  deletion_window_in_days = 30
+  deletion_window_in_days = 7
 }
 
 resource "aws_kms_alias" "data" {
@@ -10,15 +10,18 @@ resource "aws_kms_alias" "data" {
 }
 
 resource "aws_s3_bucket" "medallion" {
-  bucket = "${local.prefix}-medallion-${local.bucket_suffix}"
+  bucket        = "${local.prefix}-medallion-${local.bucket_suffix}"
+  force_destroy = true
 }
 
 resource "aws_s3_bucket" "artifacts" {
-  bucket = "${local.prefix}-artifacts-${local.bucket_suffix}"
+  bucket        = "${local.prefix}-artifacts-${local.bucket_suffix}"
+  force_destroy = true
 }
 
 resource "aws_s3_bucket" "results" {
-  bucket = "${local.prefix}-athena-results-${local.bucket_suffix}"
+  bucket        = "${local.prefix}-athena-results-${local.bucket_suffix}"
+  force_destroy = true
 }
 
 locals {
