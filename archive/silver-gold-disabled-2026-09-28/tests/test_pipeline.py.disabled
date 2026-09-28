@@ -144,7 +144,7 @@ def test_lakshya_fixture_normalizes_and_links_photo_without_transcript(tmp_path)
     assert prescription[-1]["event_type"] == "medication_supply_reported"
     assert prescription[-1]["supply_status"] == "out"
     assert prescription[0]["event_type"] == "prescription_recorded"
-    assert all(row["data_origin"] == "synthetic_demo" for row in medical + prescription)
+    assert all(row["data_origin"] == "demo_fixture" for row in medical + prescription)
 
     # Matching request IDs are never enough to cross patient boundaries.
     other_patient_photo = {**silver["media_assets"][0], "patient_id": "someone-else"}

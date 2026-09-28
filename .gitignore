@@ -6,6 +6,7 @@
 !.terraform.lock.hcl
 .venv/
 __pycache__/
+*.egg-info/
 .pytest_cache/
 *.pyc
 *.db

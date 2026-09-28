@@ -7,17 +7,15 @@ terraform {
     bucket       = "terraform-lucky9"
     key          = "azalea-nezu/hackathon/terraform.tfstate"
     region       = "us-west-2"
-    profile      = "azalea-nezu-source"
+    profile      = "Lucky9 Root"
     encrypt      = true
     use_lockfile = true
-    assume_role  = { role_arn = "arn:aws:iam::964028866059:role/azalea-nezu-terraform-deployer" }
   }
 }
 
 provider "aws" {
   region  = "us-west-2"
-  profile = "azalea-nezu-source"
-  assume_role { role_arn = "arn:aws:iam::964028866059:role/azalea-nezu-terraform-deployer" }
+  profile = "Lucky9 Root"
   default_tags {
     tags = { project = "azalea-nezu", environment = "hackathon", ManagedBy = "terraform" }
   }

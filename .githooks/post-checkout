@@ -10,7 +10,7 @@ common_dir=$(git rev-parse --path-format=absolute --git-common-dir)
 primary_root=$(dirname "$common_dir")
 [ "$worktree_root" != "$primary_root" ] || exit 0
 
-for relative_path in .env config/sources.json vps/.env; do
+for relative_path in .env; do
   source_path="$primary_root/$relative_path"
   target_path="$worktree_root/$relative_path"
   [ -f "$source_path" ] || continue

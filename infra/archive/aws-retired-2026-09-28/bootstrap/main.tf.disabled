@@ -124,7 +124,7 @@ resource "aws_iam_role_policy" "deployer" {
 resource "aws_secretsmanager_secret" "tailscale_auth" {
   name                    = "azalea-nezu/tailscale/notebook-auth-key"
   description             = "Populate out of band with a tagged Tailscale auth key before enabling the notebook."
-  recovery_window_in_days = 7
+  recovery_window_in_days = 0
 }
 
 output "deployer_role_arn" { value = aws_iam_role.deployer.arn }

@@ -6,8 +6,8 @@ from datetime import datetime, timezone
 
 CLINICAL_FIELDS = {
     "symptom_reported": {"body_site", "symptom", "summary", "capture_request_id", "evidence_source", "data_origin"},
-    "medication_supply_reported": {"medication_name", "formulation", "strength", "supply_status", "summary", "evidence_source", "data_origin"},
-    "prescription_recorded": {"medication_name", "formulation", "strength", "supply_status", "summary", "evidence_source", "data_origin"},
+    "medication_supply_reported": {"medication_name", "formulation", "strength", "supply_status", "summary", "capture_request_id", "evidence_source", "data_origin"},
+    "prescription_recorded": {"medication_name", "formulation", "strength", "supply_status", "summary", "capture_request_id", "evidence_source", "data_origin"},
 }
 
 

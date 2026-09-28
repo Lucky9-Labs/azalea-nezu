@@ -31,7 +31,7 @@ def make_fixture(path: Path) -> None:
                 "2026-07-15T17:00:00Z", {"event_type": "prescription_recorded", "data": {
                     "medication_name": "ketoconazole", "formulation": "shampoo", "strength": "2%",
                     "supply_status": "prescribed", "summary": "Synthetic historical prescription record",
-                    "evidence_source": "synthetic_chart", "data_origin": "synthetic_demo",
+                    "evidence_source": "synthetic_chart", "data_origin": "demo_fixture",
                 }}, None, None,
             ),
             (
@@ -39,7 +39,7 @@ def make_fixture(path: Path) -> None:
                 "2026-08-20T18:00:00Z", {"event_type": "symptom_reported", "data": {
                     "body_site": "scalp", "symptom": "flaking",
                     "summary": "Patient reported intermittent scalp flaking",
-                    "evidence_source": "patient_report", "data_origin": "synthetic_demo",
+                    "evidence_source": "patient_report", "data_origin": "demo_fixture",
                 }}, None, None,
             ),
             (
@@ -48,7 +48,7 @@ def make_fixture(path: Path) -> None:
                     "body_site": "scalp", "symptom": "flaking",
                     "summary": "Patient is worried about flaky skin on the scalp",
                     "capture_request_id": "lakshya-capture-001",
-                    "evidence_source": "patient_report", "data_origin": "synthetic_demo",
+                    "evidence_source": "patient_report", "data_origin": "demo_fixture",
                 }}, None, None,
             ),
             (
@@ -56,7 +56,8 @@ def make_fixture(path: Path) -> None:
                 "2026-09-26T19:00:10Z", {"event_type": "medication_supply_reported", "data": {
                     "medication_name": "ketoconazole", "formulation": "shampoo", "strength": "2%",
                     "supply_status": "out", "summary": "Patient reports being out of ketoconazole shampoo",
-                    "evidence_source": "patient_report", "data_origin": "synthetic_demo",
+                    "capture_request_id": "lakshya-capture-001",
+                    "evidence_source": "patient_report", "data_origin": "demo_fixture",
                 }}, None, None,
             ),
             (
@@ -70,7 +71,7 @@ def make_fixture(path: Path) -> None:
             (
                 "lakshya-span-current-001", "tin_agent_spans", "raw-span-current-001", "span",
                 "2026-09-26T19:00:40Z", {
-                    "trace_id": "lakshya-trace-001", "span_id": "lakshya-span-001",
+                    "trace_id": "lakshya-capture-001", "span_id": "lakshya-span-001",
                     "agent_name": "edge-assistant", "operation": "summarize",
                     "started_at": "2026-09-26T19:00:40Z", "ended_at": "2026-09-26T19:00:42Z",
                     "status": "ok", "attributes": {"synthetic": True},
